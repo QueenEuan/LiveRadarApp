@@ -16,6 +16,10 @@ export default function Home() {
   const [eventType, setEventType] = useState('');
   const [location, setLocation] = useState('');
   const [events, setEvents] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+const handleSearch = (data: any) => {
+  console.log(data);
+};
 
   const handleSearch = async () => {
     console.log('搜索觸發，輸入：', { searchQuery, date, eventType, location });

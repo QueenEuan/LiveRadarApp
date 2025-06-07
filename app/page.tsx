@@ -1,103 +1,136 @@
-import Image from "next/image";
+"use client";
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [searchQuery, setSearchQuery] = useState('');
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [eventType, setEventType] = useState('');
+  const [location, setLocation] = useState('');
+  const [events, setEvents] = useState<any[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleSearch = async () => {
+    console.log('搜索觸發，輸入：', { searchQuery, date, eventType, location });
+    try {
+      const eventsRef = collection(db, 'events');
+      let q = query(eventsRef);
+
+      if (searchQuery) {
+        console.log('查詢關鍵詞：', searchQuery.toLowerCase());
+        q = query(q, where('keywords', 'array-contains', searchQuery.toLowerCase()));
+      }
+      if (date) {
+        const formattedDate = format(date, 'yyyy-MM-dd');
+        console.log('查詢日期：', formattedDate);
+        q = query(q, where('date', '==', formattedDate));
+      }
+      if (eventType) {
+        console.log('查詢類型：', eventType);
+        q = query(q, where('type', '==', eventType));
+      }
+      if (location) {
+        console.log('查詢地點：', location);
+        q = query(q, where('location', '==', location));
+      }
+
+      const querySnapshot = await getDocs(q);
+      const eventsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('查詢結果：', eventsData);
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('搜索錯誤：', error);
+    }
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-3xl font-bold mb-6 text-center">LiveRadar：尋找你的音樂活動</h1>
+      
+      {/* 搜索欄 */}
+      <div className="flex gap-4 mb-6">
+        <Input
+  id="search-query"
+  name="search-query"
+  type="text"
+  placeholder="按藝人、場地或關鍵詞搜索..."
+  value={searchQuery}
+  onChange={(e) => setSearchQuery(e.target.value)}
+  className="flex-grow"
+/>
+        <Button onClick={handleSearch}>搜索</Button>
+      </div>
+
+      {/* 過濾器 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* 日曆選擇器 */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={`w-full justify-start text-left font-normal ${!date && 'text-muted-foreground'}`}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, 'PPP') : <span>選擇日期</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          </PopoverContent>
+        </Popover>
+
+        {/* 活動類型過濾 */}
+<Select id="event-type-select" name="event-type" onValueChange={setEventType} value={eventType}>
+  <SelectTrigger id="event-type-trigger" name="event-type">
+    <SelectValue placeholder="選擇活動類型" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="concert">演唱會</SelectItem>
+    <SelectItem value="festival">音樂節</SelectItem>
+    <SelectItem value="performance">表演</SelectItem>
+  </SelectContent>
+</Select>
+
+{/* 地點過濾 */}
+<Select id="location-select" name="location" onValueChange={setLocation} value={location}>
+  <SelectTrigger id="location-trigger" name="location">
+    <SelectValue placeholder="選擇地點" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="taipei">台北</SelectItem>
+    <SelectItem value="kaohsiung">高雄</SelectItem>
+    <SelectItem value="taichung">台中</SelectItem>
+  </SelectContent>
+</Select>
+      </div>
+
+      {/* 活動列表 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {events.length > 0 ? (
+          events.map(event => (
+            <div key={event.id} className="p-4 border rounded">
+              <h2 className="text-xl font-semibold">{event.title}</h2>
+              <p>日期：{event.date}</p>
+              <p>地點：{event.location}</p>
+              <p>類型：{event.type}</p>
+            </div>
+          ))
+        ) : (
+          <p className="text-center text-lg">活動列表將根據你的搜索和過濾條件顯示在此處。</p>
+        )}
+      </div>
     </div>
   );
 }

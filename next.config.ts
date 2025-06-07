@@ -1,13 +1,12 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   headers: async () => [
     {
-      source: '/:path*',
+      source: "/(.*)",
       headers: [
         {
-          key: 'Content-Security-Policy',
-          value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com;",
+          key: "Content-Security-Policy",
+          value: "script-src 'self' 'unsafe-eval' https://*.firebaseio.com https://*.googleapis.com;",
         },
       ],
     },

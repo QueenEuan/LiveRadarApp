@@ -3,8 +3,18 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
 import { db } from '@/lib/firebase';
@@ -31,6 +41,7 @@ export default function Home() {
     try {
       const eventsRef = collection(db, 'events');
       let q = query(eventsRef);
+
       if (searchQuery) {
         q = query(q, where('keywords', 'array-contains', searchQuery.toLowerCase()));
       }
@@ -44,11 +55,13 @@ export default function Home() {
       if (location) {
         q = query(q, where('location', '==', location));
       }
+
       const querySnapshot = await getDocs(q);
-      const eventsData = querySnapshot.docs.map(doc => ({
+      const eventsData = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       })) as Event[];
+
       setEvents(eventsData);
     } catch (error) {
       console.error('搜索錯誤：', error);
@@ -58,6 +71,7 @@ export default function Home() {
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-center">LiveRadar：尋找你的音樂活動</h1>
+
       <div className="flex gap-4 mb-6">
         <Input
           id="search-query"
@@ -70,19 +84,29 @@ export default function Home() {
         />
         <Button onClick={handleSearch}>搜索</Button>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={`w-full justify-start text-left font-normal ${!date && 'text-muted-foreground'}`}>
+            <Button
+              variant="outline"
+              className={`w-full justify-start text-left font-normal ${!date && 'text-muted-foreground'}`}
+            >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {date ? format(date, 'PPP') : <span>選擇日期</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
-            <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+            />
           </PopoverContent>
         </Popover>
-        <Select id="event-type-select" name="event-type" onValueChange={setEventType} value={eventType}>
+
+        <Select onValueChange={setEventType} value={eventType}>
           <SelectTrigger>
             <SelectValue placeholder="選擇活動類型" />
           </SelectTrigger>
@@ -92,7 +116,8 @@ export default function Home() {
             <SelectItem value="performance">表演</SelectItem>
           </SelectContent>
         </Select>
-        <Select id="location-select" name="location" onValueChange={setLocation} value={location}>
+
+        <Select onValueChange={setLocation} value={location}>
           <SelectTrigger>
             <SelectValue placeholder="選擇地點" />
           </SelectTrigger>
@@ -103,6 +128,7 @@ export default function Home() {
           </SelectContent>
         </Select>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {events.length > 0 ? (
           events.map((event) => (
@@ -120,3 +146,4 @@ export default function Home() {
     </div>
   );
 }
+  
